@@ -1,6 +1,6 @@
 import express from "express";
 
-import { errorHandler, sendEmail } from "../controllers/general.js";
+import { errorHandler, sendEmail } from "../middlewares/general.js";
 
 import User from "../models/UserModel.js";
 import Patient from "../models/PatientModel.js"

@@ -5,6 +5,9 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { UserRouter } from './routes/user.js';
 import { AdminRouter } from './routes/admin.js';
+import { PatientRouter } from './routes/patient.js';
+import { DoctorRouter } from './routes/doctor.js';
+import { AppointmentRouter } from './routes/appointment.js';
 
 dotenv.config();
 
@@ -27,6 +30,9 @@ app.use(cookieParser());
 
 app.use('/user', UserRouter);
 app.use('/admin', AdminRouter);
+app.use('/patient', PatientRouter);
+app.use('/doctor', DoctorRouter);
+app.use('/appointment', AppointmentRouter);
 
 const SERVER_PORT = process.env.PORT || 5000;
 app.listen(SERVER_PORT, () => console.log(`Server listening on port ${SERVER_PORT}`));
