@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 
 const PatientSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  username: { type: String, required: true }, 
+  username: { type: String, required: true },
+  stripeCustomerId: { type: String },
 }, { timestamps: true });
 
 PatientSchema.pre('save', function(next) {
