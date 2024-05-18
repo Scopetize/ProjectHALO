@@ -2,7 +2,7 @@ import express from "express";
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
-import { errorHandler } from "../controllers/general.js";
+import { errorHandler } from "../middlewares/general.js";
 
 import User from "../models/UserModel.js";
 import Patient from "../models/PatientModel.js"

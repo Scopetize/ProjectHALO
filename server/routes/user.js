@@ -2,11 +2,12 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import { errorHandler, sendEmail } from "../controllers/general.js";
-import { verifyUser } from "../controllers/user-controller.js";
+import { errorHandler, sendEmail } from "../middlewares/general.js";
+import { verifyUser } from "../middlewares/userMiddleware.js";
 
 import User from "../models/UserModel.js";
-import Patient from "../models/PatientModel.js"
+import Patient from "../models/PatientModel.js";
+import Doctor from "../models/DoctorModel.js";
 
 const router = express.Router();
 const revokedTokens = new Set();
@@ -22,7 +23,7 @@ router.post("/signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const existingUser = await User.findOne({ email });
-    const existingUsername = role === 'Patient' ? await Patient.findOne({ username }) : null;
+    const existingUsername = role === 'Patient' ? await Patient.findOne({ username }) : role === 'Doctor' ? await Doctor.findOne({ username }) : null;
 
     if (existingUser) {
       return errorHandler(res, 400, "Email already registered.");
@@ -42,15 +43,23 @@ router.post("/signup", async (req, res) => {
     await newUser.save();
 
     let newPatient = null;
+    let newDoctor = null;
     if (role === 'Patient') {
       newPatient = new Patient({
         userId: newUser._id,
         username
       });
       await newPatient.save();
+    } else if (role === 'Doctor') {
+      newDoctor = new Doctor({
+        userId: newUser._id,
+        name,
+        specialty: req.body.specialty
+      });
+      await newDoctor.save();
     }
 
-    if (!newUser || (role === 'Patient' && !newPatient)) {
+    if (!newUser || (role === 'Patient' && !newPatient) || (role === 'Doctor' && !newDoctor)) {
       return errorHandler(res, 500, "Failed to set up user account fully.");
     }
 
@@ -96,7 +105,8 @@ router.post("/login", async (req, res) => {
       user = await User.findOne({ email });
     } else if (username) {
       const patient = await Patient.findOne({ username }).populate('userId');
-      user = patient ? patient.userId : null;
+      const doctor = await Doctor.findOne({ username }).populate('userId');
+      user = patient ? patient.userId : doctor ? doctor.userId : null;
     }
 
     if (!user) {
@@ -140,11 +150,14 @@ router.get("/profile", verifyUser, async (req, res) => {
     }
 
     let patientInfo = null;
+    let doctorInfo = null;
     if (user.role === 'Patient') {
       patientInfo = await Patient.findOne({ userId: user._id });
+    } else if (user.role === 'Doctor') {
+      doctorInfo = await Doctor.findOne({ userId: user._id });
     }
 
-    res.status(200).json({ message: "Profile fetched successfully.", user, patientInfo });
+    res.status(200).json({ message: "Profile fetched successfully.", user, patientInfo, doctorInfo });
   } catch (err) {
     return errorHandler(res, 500, "Failed to retrieve user profile.");
   }
@@ -167,6 +180,8 @@ router.delete("/delete", verifyUser, async (req, res) => {
 
     if (user.role === 'Patient') {
       await Patient.deleteOne({ userId: userId });
+    } else if (user.role === 'Doctor') {
+      await Doctor.deleteOne({ userId: userId });
     }
 
     await User.deleteOne({ _id: userId });
