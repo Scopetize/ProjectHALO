@@ -4,8 +4,16 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   verified: { type: Boolean, default: false },
+  role: { type: String, required: true, default: 'User' },
 }, { timestamps: true });
 
-const UserModel = mongoose.model("User", UserSchema);
+UserSchema.pre('save', function(next) {
+  if (!this.isModified('role')) {
+    this.role = 'User';
+  }
+  next();
+});
 
-export { UserModel as User };
+const User = mongoose.model("User", UserSchema);
+
+export default User;
