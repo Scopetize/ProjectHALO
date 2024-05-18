@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { errorHandler } from "../middlewares/general.js";
 
-import User from "../models/UserModel.js";
 import Patient from "../models/PatientModel.js"
+import Doctor from "../models/DoctorModel.js";
 
 const router = express.Router();
 const stripe = new Stripe('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
@@ -48,5 +48,36 @@ router.post("/payment", async (req, res) => {
         errorHandler(res, 400, "Failed to process payment.");
     }
 });
+
+router.post("/applyDoctor", async (req, res) => {
+    const { userId, name, specialty } = req.body;
+
+    if (!userId || !name || !specialty) {
+        return errorHandler(res, 400, "All fields are required.");
+    }
+
+    try {
+        const patient = await Patient.findOne({ userId });
+        if (!patient) {
+            return errorHandler(res, 404, "Patient not found.");
+        }
+
+        const newDoctor = new Doctor({
+            userId: patient.userId,
+            name: name,
+            specialty: specialty
+        });
+
+        await newDoctor.save();
+
+        await Patient.deleteOne({ userId });
+
+        res.status(201).json({ message: "Patient application to doctor successful.", doctor: newDoctor });
+    } catch (error) {
+        console.error(`Error: ${error}`);
+        errorHandler(res, 500, "Failed to apply as doctor.");
+    }
+});
+
 
 export { router as PatientRouter };
