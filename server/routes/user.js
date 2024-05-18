@@ -7,6 +7,7 @@ import { verifyUser } from "../middlewares/userMiddleware.js";
 
 import User from "../models/UserModel.js";
 import Patient from "../models/PatientModel.js"
+import Doctor from "../models/DoctorModel.js"; // Assuming Doctor model exists
 
 const router = express.Router();
 const revokedTokens = new Set();
@@ -139,17 +140,18 @@ router.get("/profile", verifyUser, async (req, res) => {
       return errorHandler(res, 404, "User not found.");
     }
 
-    let patientInfo = null;
+    let roleInfo = null;
     if (user.role === 'Patient') {
-      patientInfo = await Patient.findOne({ userId: user._id });
+      roleInfo = await Patient.findOne({ userId: user._id });
+    } else if (user.role === 'Doctor') {
+      roleInfo = await Doctor.findOne({ userId: user._id });
     }
 
-    res.status(200).json({ message: "Profile fetched successfully.", user, patientInfo });
+    res.status(200).json({ message: "Profile fetched successfully.", user, roleInfo });
   } catch (err) {
     return errorHandler(res, 500, "Failed to retrieve user profile.");
   }
 });
-
 router.delete("/delete", verifyUser, async (req, res) => {
   try {
     const userId = req.userId;
@@ -167,6 +169,8 @@ router.delete("/delete", verifyUser, async (req, res) => {
 
     if (user.role === 'Patient') {
       await Patient.deleteOne({ userId: userId });
+    } else if (user.role === 'Doctor') {
+      await Doctor.deleteOne({ userId: userId });
     }
 
     await User.deleteOne({ _id: userId });
@@ -338,6 +342,38 @@ router.post("/resendVerification", async (req, res) => {
       return errorHandler(res, 410, "Session expired. Please log in again.");
     }
     return errorHandler(res, 500, "Server error while processing request.");
+  }
+});
+
+router.post("/applyDoctor", verifyUser, async (req, res) => {
+  const userId = req.userId;
+  const { name, specialty } = req.body;
+
+  if (!name || !specialty) {
+      return errorHandler(res, 400, "All fields are required.");
+  }
+
+  try {
+      const patient = await Patient.findOne({ userId });
+      if (!patient) {
+          return errorHandler(res, 404, "Patient not found.");
+      }
+
+      const newDoctor = new Doctor({
+          userId: patient.userId,
+          name: name,
+          specialty: specialty
+      });
+
+      await newDoctor.save();
+
+      await Patient.deleteOne({ userId });
+      await User.findByIdAndUpdate(userId, { role: 'Doctor' });
+
+      res.status(201).json({ message: "Patient application to doctor successful.", doctor: newDoctor });
+  } catch (error) {
+      console.error(`Error: ${error}`);
+      errorHandler(res, 500, "Failed to apply as doctor.");
   }
 });
 

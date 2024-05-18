@@ -49,35 +49,4 @@ router.post("/payment", async (req, res) => {
     }
 });
 
-router.post("/applyDoctor", async (req, res) => {
-    const { userId, name, specialty } = req.body;
-
-    if (!userId || !name || !specialty) {
-        return errorHandler(res, 400, "All fields are required.");
-    }
-
-    try {
-        const patient = await Patient.findOne({ userId });
-        if (!patient) {
-            return errorHandler(res, 404, "Patient not found.");
-        }
-
-        const newDoctor = new Doctor({
-            userId: patient.userId,
-            name: name,
-            specialty: specialty
-        });
-
-        await newDoctor.save();
-
-        await Patient.deleteOne({ userId });
-
-        res.status(201).json({ message: "Patient application to doctor successful.", doctor: newDoctor });
-    } catch (error) {
-        console.error(`Error: ${error}`);
-        errorHandler(res, 500, "Failed to apply as doctor.");
-    }
-});
-
-
 export { router as PatientRouter };
