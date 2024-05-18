@@ -6,14 +6,14 @@ const PatientSchema = new mongoose.Schema({
   stripeCustomerId: { type: String },
 }, { timestamps: true });
 
-PatientSchema.pre('save', function(next) {
+PatientSchema.pre('save', function (next) {
   if (!this.isModified('role')) {
     this.role = 'Patient';
   }
   next();
 });
 
-PatientSchema.post('save', async function() {
+PatientSchema.post('save', async function () {
   try {
     if (this.isNew) {
       await this.constructor.collection.createIndex({ username: 'text' });

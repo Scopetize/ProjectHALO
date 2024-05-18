@@ -2,8 +2,8 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import { errorHandler, sendEmail } from "../controllers/general.js";
-import { verifyUser } from "../controllers/user-controller.js";
+import { errorHandler, sendEmail } from "../middlewares/general.js";
+import { verifyUser } from "../middlewares/userMiddleware.js";
 
 import User from "../models/UserModel.js";
 import Patient from "../models/PatientModel.js"
