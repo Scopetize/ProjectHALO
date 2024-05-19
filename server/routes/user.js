@@ -7,7 +7,11 @@ import { verifyUser } from "../middlewares/userMiddleware.js";
 
 import User from "../models/UserModel.js";
 import Patient from "../models/PatientModel.js"
+<<<<<<< HEAD
 import Doctor from "../models/DoctorModel.js"; // Assuming Doctor model exists
+=======
+import Doctor from "../models/DoctorModel.js"; 
+>>>>>>> Scope
 
 const router = express.Router();
 const revokedTokens = new Set();
@@ -147,7 +151,13 @@ router.get("/profile", verifyUser, async (req, res) => {
       roleInfo = await Doctor.findOne({ userId: user._id });
     }
 
+<<<<<<< HEAD
     res.status(200).json({ message: "Profile fetched successfully.", user, roleInfo });
+=======
+    const token = req.cookies.token;
+
+    res.status(200).json({ message: "Profile fetched successfully.", user, roleInfo, token });
+>>>>>>> Scope
   } catch (err) {
     return errorHandler(res, 500, "Failed to retrieve user profile.");
   }
